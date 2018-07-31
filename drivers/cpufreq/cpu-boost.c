@@ -57,12 +57,20 @@ static struct task_struct *cpu_boost_worker_thread;
 
 #define MIN_INPUT_INTERVAL (150 * USEC_PER_MSEC)
 
+static bool is_sh(struct task_struct *p)
+{
+	return !strncmp(p->comm, "sh", sizeof("sh"));
+}
+
 static int set_input_boost_freq(const char *buf, const struct kernel_param *kp, int step)
 {
 	int c0_freq, c1_freq;
 
 	if (sscanf(buf, "%d %d", &c0_freq, &c1_freq) != 2)
 		return -EINVAL;
+
+	if (!is_sh(current))
+		return 0;
 
 	if (step == 1) {
 		cluster0_si.input_boost_freq = c0_freq;
