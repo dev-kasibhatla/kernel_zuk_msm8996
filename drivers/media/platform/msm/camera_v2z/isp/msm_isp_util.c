@@ -828,6 +828,7 @@ static long msm_isp_ioctl_unlocked(struct v4l2_subdev *sd,
 		break;
 	case VIDIOC_MSM_ISP_AXI_RESTART:
 		mutex_lock(&vfe_dev->core_mutex);
+		mutex_lock(&vfe_dev->buf_mgr->lock);
 		if (atomic_read(&vfe_dev->error_info.overflow_state)
 			!= HALT_ENFORCED) {
 			rc = msm_isp_stats_restart(vfe_dev);
@@ -838,6 +839,7 @@ static long msm_isp_ioctl_unlocked(struct v4l2_subdev *sd,
 			pr_err_ratelimited("%s: no AXI restart, halt enforced.\n",
 				__func__);
 		}
+		mutex_unlock(&vfe_dev->buf_mgr->lock);
 		mutex_unlock(&vfe_dev->core_mutex);
 		break;
 	case VIDIOC_MSM_ISP_INPUT_CFG:
@@ -1338,8 +1340,9 @@ int msm_isp_proc_cmd(struct vfe_device *vfe_dev, void *arg)
 		return -EINVAL;
 	}
 
-	reg_cfg_cmd = kzalloc(sizeof(struct msm_vfe_reg_cfg_cmd)*
-		proc_cmd->num_cfg, GFP_KERNEL);
+	reg_cfg_cmd = kcalloc(proc_cmd->num_cfg,
+			      sizeof(struct msm_vfe_reg_cfg_cmd),
+			      GFP_KERNEL);
 	if (!reg_cfg_cmd) {
 		pr_err("%s: reg_cfg alloc failed\n", __func__);
 		rc = -ENOMEM;

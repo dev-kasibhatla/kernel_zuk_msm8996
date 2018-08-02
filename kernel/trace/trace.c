@@ -1313,12 +1313,13 @@ static inline void set_cmdline(int idx, const char *cmdline)
 static int allocate_cmdlines_buffer(unsigned int val,
 				    struct saved_cmdlines_buffer *s)
 {
-	s->map_cmdline_to_pid = kmalloc(val * sizeof(*s->map_cmdline_to_pid),
-					GFP_KERNEL);
+	s->map_cmdline_to_pid = kmalloc_array(val,
+					      sizeof(*s->map_cmdline_to_pid),
+					      GFP_KERNEL);
 	if (!s->map_cmdline_to_pid)
 		return -ENOMEM;
 
-	s->saved_cmdlines = kmalloc(val * TASK_COMM_LEN, GFP_KERNEL);
+	s->saved_cmdlines = kmalloc_array(TASK_COMM_LEN, val, GFP_KERNEL);
 	if (!s->saved_cmdlines) {
 		kfree(s->map_cmdline_to_pid);
 		return -ENOMEM;
@@ -3038,7 +3039,8 @@ __tracing_open(struct inode *inode, struct file *file, bool snapshot)
 	if (!iter)
 		return ERR_PTR(-ENOMEM);
 
-	iter->buffer_iter = kzalloc(sizeof(*iter->buffer_iter) * num_possible_cpus(),
+	iter->buffer_iter = kcalloc(num_possible_cpus(),
+				    sizeof(*iter->buffer_iter),
 				    GFP_KERNEL);
 	if (!iter->buffer_iter)
 		goto release;

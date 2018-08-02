@@ -113,14 +113,14 @@ static int32_t msm_vfe44_init_dt_parms(struct vfe_device *vfe_dev,
 		pr_err("%s: NO QOS entries found\n", __func__);
 		return -EINVAL;
 	} else {
-		dt_settings = kzalloc(sizeof(uint32_t) * dt_entries,
-			GFP_KERNEL);
+		dt_settings = kcalloc(dt_entries, sizeof(uint32_t),
+				      GFP_KERNEL);
 		if (!dt_settings) {
 			pr_err("%s:%d No memory\n", __func__, __LINE__);
 			return -ENOMEM;
 		}
-		dt_regs = kzalloc(sizeof(uint32_t) * dt_entries,
-			GFP_KERNEL);
+		dt_regs = kcalloc(dt_entries, sizeof(uint32_t),
+				  GFP_KERNEL);
 		if (!dt_regs) {
 			pr_err("%s:%d No memory\n", __func__, __LINE__);
 			kfree(dt_settings);
@@ -870,13 +870,14 @@ static int msm_vfe44_fetch_engine_start(struct vfe_device *vfe_dev,
 		mutex_lock(&vfe_dev->buf_mgr->lock);
 		rc = vfe_dev->buf_mgr->ops->get_buf_by_index(
 			vfe_dev->buf_mgr, bufq_handle, fe_cfg->buf_idx, &buf);
-		mutex_unlock(&vfe_dev->buf_mgr->lock);
 		if (rc < 0) {
 			pr_err("%s: No fetch buffer\n", __func__);
+			mutex_unlock(&vfe_dev->buf_mgr->lock);
 			return -EINVAL;
 		}
 		mapped_info = buf->mapped_info[0];
 		buf->state = MSM_ISP_BUFFER_STATE_DISPATCHED;
+		mutex_unlock(&vfe_dev->buf_mgr->lock);
 	} else {
 		rc = vfe_dev->buf_mgr->ops->map_buf(vfe_dev->buf_mgr,
 			&mapped_info, fe_cfg->fd);
